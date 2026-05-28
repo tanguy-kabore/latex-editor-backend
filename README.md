@@ -10,7 +10,7 @@
 
 Built with **Hono · Node.js · Prisma · PostgreSQL (Supabase)**, designed to deploy on **Render** (native Node runtime, no Docker).
 
-> **Frontend repository:** [`latex-editor-frontend`](https://github.com/your-org/latex-editor-frontend)
+> **Frontend repository:** [`latex-editor-frontend`](https://github.com/tanguy-kabore/latex-editor-frontend)
 
 ---
 

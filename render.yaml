@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: latex-editor-backend
+    env: node
+    region: frankfurt
+    plan: starter
+    buildCommand: |
+      apt-get update -y &&
+      apt-get install -y --no-install-recommends
+        texlive-latex-base
+        texlive-latex-recommended
+        texlive-latex-extra
+        texlive-fonts-recommended
+        texlive-science &&
+      npm ci &&
+      npm run build &&
+      npx prisma generate &&
+      npx prisma migrate deploy
+    startCommand: node dist/index.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000

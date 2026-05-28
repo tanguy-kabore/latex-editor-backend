@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  ERROR
+  TIMEOUT
+}
+
+model User {
+  id              String          @id @default(uuid())
+  email           String          @unique
+  passwordHash    String
+  name            String
+  createdAt       DateTime        @default(now())
+  projects        Project[]
+  memberships     ProjectMember[]
+  templates       Template[]
+  templateShares  TemplateShare[]
+}
+
+model Project {
+  id           String           @id @default(uuid())
+  title        String
+  ownerId      String
+  owner        User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members      ProjectMember[]
+  files        File[]
+  compilations CompilationJob[]
+  chatMessages  ChatMessage[]
+  fileRevisions FileRevision[]
+  archivedAt    DateTime?
+  deletedAt    DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model ProjectMember {
+  projectId String
+  userId    String
+  role      Role    @default(EDITOR)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+}
+
+model File {
+  id        String         @id @default(uuid())
+  projectId String
+  name      String
+  content   String         @db.Text
+  isMain    Boolean        @default(false)
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  revisions FileRevision[]
+  updatedAt DateTime       @updatedAt
+}
+
+model FileRevision {
+  id        String   @id @default(uuid())
+  fileId    String
+  projectId String
+  userId    String
+  userName  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  file      File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model CompilationJob {
+  id        String    @id @default(uuid())
+  projectId String
+  status    JobStatus
+  pdfUrl    String?
+  pdfData   Bytes?
+  log       String?   @db.Text
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+}
+
+model Template {
+  id          String          @id @default(uuid())
+  title       String
+  description String?
+  category    String?
+  isPublic    Boolean         @default(false)
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files       TemplateFile[]
+  sharedWith  TemplateShare[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model TemplateFile {
+  id         String   @id @default(uuid())
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  name       String
+  content    String   @db.Text
+  isMain     Boolean  @default(false)
+}
+
+model TemplateShare {
+  templateId String
+  userId     String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([templateId, userId])
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  userName  String
+  text      String   @db.Text
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
